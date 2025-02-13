@@ -41,3 +41,6 @@ dotnet restore
   "SecretKey": "tu_clave_secreta_de_stripe"
 }
 ```
+
+### Ejecutar la aplicación
+Una vez configurado todo, puedes ejecutar el proyecto presionando F5 o seleccionando Iniciar en Visual Studio.
