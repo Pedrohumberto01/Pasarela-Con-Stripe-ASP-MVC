@@ -1,0 +1,155 @@
+﻿@{
+    ViewData["Title"] = "Pago con Stripe";
+}
+
+@model IEnumerable<Pasarela.Models.Productos>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Pago con Stripe</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        /* Estilos globales */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            padding: 20px;
+            background-color: #0078D4;
+            color: white;
+        }
+
+        /* Contenedor del grid */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Estilos para cada tarjeta */
+        .card {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .card-content {
+            padding: 15px;
+        }
+
+        .card-content h2 {
+            font-size: 20px;
+            margin: 0 0 10px;
+            color: #0078D4;
+        }
+
+        .card-content p {
+            font-size: 16px;
+            color: #555;
+            margin: 0 0 15px;
+        }
+
+        /* Botón de compra */
+        .card-content button {
+            background-color: #0078D4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .card-content button:hover {
+            background-color: #005bb5;
+        }
+    </style>
+</head>
+<body>
+    <h1>Pago con Stripe</h1>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+
+            // iniciar la instancia de stripe
+            const stripe = Stripe("@ViewBag.StripePublishableKey");
+
+            // seleccionar todos los botones
+            const buttons = document.querySelectorAll(".buy-button");
+                
+            // iterar sobre cada uno para agregar el evento
+            buttons.forEach((button) => {
+                button.addEventListener("click", async () => {
+                    // obtiene los datos del producto a comprar
+                    const producto = {
+                        Nombre: button.dataset.nombre,
+                        Precio: button.dataset.precio,
+                        Img: button.dataset.img
+                    };
+
+                    // petición al servidor 
+                    const response = await fetch("/Home/CreateCheckoutSession", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(producto)
+                    });
+
+                    // obtiene el identificador unico de la session de pago
+                    const { sessionId } = await response.json();
+
+                    // redirige al metodo de pago
+                    stripe.redirectToCheckout({ sessionId });
+                });
+            });
+        });
+    </script>
+
+    <div class="grid-container">
+        @foreach (var producto in Model)
+        {
+            <div class="card">
+                <img src="@producto.Img" alt="@producto.Nombre" />
+                <div class="card-content">
+                    <h2>@producto.Nombre</h2>
+                    <p>Precio: @(producto.Precio / 100).00 $</p>
+                    <button class="buy-button"
+                            data-nombre="@producto.Nombre"
+                            data-precio="@producto.Precio"
+                            data-img="@producto.Img">
+                        Comprar
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+
+</body>
+</html>
